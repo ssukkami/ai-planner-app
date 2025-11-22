@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Planner App</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/scripts.js') }}" defer></script>
+  <style>
+    /* Smart Header - тільки для поведінки при скролі */
+    #mainHeader {
+      position: fixed;
+      top: 0;
+      left: 370px;
+      right: 0;
+      z-index: 1000;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    #mainHeader.header-hidden {
+      transform: translateY(-100%);
+    }
+
+    #mainHeader.header-visible {
+      transform: translateY(0);
+    }
+
+    /* Відступ для контенту */
+    main {
+      padding-top: 70px;
+    }
+  </style>
+</head>
+
+<body>
+  <header id="mainHeader">
+    <nav class="glass-nav">
+      <ul>
+        {% if 'user_id' in session %}
+        <li><a href="{{ url_for('index') }}">Головна</a></li>
+        <li><a href="{{ url_for('planner.calendar_view') }}">Планер</a></li>
+        <li><a href="{{ url_for('auth.profile') }}">Профіль</a></li>
+        <li><a href="{{ url_for('auth.logout') }}">Вихід</a></li>
+        {% else %}
+        <li><a href="{{ url_for('index') }}">Головна</a></li>
+        <li><a href="{{ url_for('auth.login') }}">Вхід</a></li>
+        <li><a href="{{ url_for('auth.register') }}">Реєстрація</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul class="flashes glass">
+      {% for message in messages %}
+      <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    // Smart Header - ховається при скролі вниз, з'являється при скролі вгору
+    (function() {
+      const header = document.getElementById('mainHeader');
+      let lastScrollY = window.scrollY;
+      let ticking = false;
+      const scrollThreshold = 10;
+
+      function updateHeader() {
+        const currentScrollY = window.scrollY;
+
+        // Якщо на самому верху - завжди показуємо
+        if (currentScrollY < 50) {
+          header.classList.remove('header-hidden');
+          header.classList.add('header-visible');
+          lastScrollY = currentScrollY;
+          ticking = false;
+          return;
+        }
+
+        // Визначаємо напрямок скролу
+        const scrollDelta = currentScrollY - lastScrollY;
+
+        if (Math.abs(scrollDelta) > scrollThreshold) {
+          if (scrollDelta > 0) {
+            // Скрол вниз - ховаємо хеддер
+            header.classList.add('header-hidden');
+            header.classList.remove('header-visible');
+          } else {
+            // Скрол вгору - показуємо хеддер
+            header.classList.remove('header-hidden');
+            header.classList.add('header-visible');
+          }
+          lastScrollY = currentScrollY;
+        }
+
+        ticking = false;
+      }
+
+      function onScroll() {
+        if (!ticking) {
+          window.requestAnimationFrame(updateHeader);
+          ticking = true;
+        }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      // Початковий стан
+      header.classList.add('header-visible');
+    })();
+  </script>
+</body>
+
+</html>

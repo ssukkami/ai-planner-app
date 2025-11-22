@@ -7,6 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
+  # 1. Етап перевірки коду (CI)
   build-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -26,13 +27,16 @@ jobs:
 
     - name: Lint with flake8
       run: |
+        # Зупинити збірку, якщо є серйозні помилки синтаксису
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Попередження для стильових помилок (не зупиняє збірку)
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+  # 2. Етап деплою (CD) - запускається ТІЛЬКИ якщо тести пройшли
   deploy:
-    needs: build-and-test
+    needs: build-and-test  # Чекаємо завершення тестів
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' # Тільки для гілки main
     
     steps:
       - name: Deploy to Render
